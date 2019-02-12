@@ -6,9 +6,6 @@ import com.chaitanyav.server.Server;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JButton;
@@ -42,7 +39,7 @@ public class ServerTest {
         frm.setVisible(true);
         
         Server svr = new Server(25566);
-        Client clt = new Client("localhost", 25566, 10000){
+        Client clt = new Client("localhost", 25566, 10000, 500){
             @Override
             public void onDisconnect(){
                 System.out.println("Disconnected");
@@ -58,7 +55,7 @@ public class ServerTest {
             svr.setAction("buttonclick", new com.chaitanyav.server.Action() {
                 @Override
                 public void execute(ClientHandler hnd, Message msg) {
-                    hnd.sendData(new Message("buttonclick-response",((Integer)msg.getData())+1));
+                    hnd.sendData("buttonclick-response",((Integer)msg.getData())+1);
                 }
             });
             clt.setAction("buttonclick-response",new com.chaitanyav.client.Action(){
@@ -68,13 +65,15 @@ public class ServerTest {
                 }                
             });
             button.addActionListener((evt)->{
-                clt.sendData(new Message("buttonclick", Integer.parseInt(lbl.getText())));
+                clt.sendData("buttonclick", Integer.parseInt(lbl.getText()));
             });
             button2.addActionListener((new ActionListener() {
                 boolean x=true;
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    clt.testDisconnect();
+                    if(x)clt.stop();
+                    else clt.connect();
+                    x=!x;
                 }
             }));
             svr.start();

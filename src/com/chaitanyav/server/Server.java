@@ -36,8 +36,8 @@ public class Server {
     //private test globalPool = new test();
     
     //disconnect timeout and pongTimeout DEFAULT in MilliSeconds
-    //for now pongTimeout is only checked for when the client doesn't sends any data for disconnectTimeout time
-    private long disconnectTimeout = 10000;   //default 10 seconds i.e. 10000ms
+    //for now pongTimeout is only checked for when the client doesn't sends any data for pingInterval time
+    private long pingInterval = 10000;   //default 10 seconds i.e. 10000ms
     private long pongTimeout = 200;   //ping pongTimeout in ms
     private final int port;
     
@@ -57,23 +57,23 @@ public class Server {
     };
     
     /**
-     * Creates a Server object with the given port and default disconnectTimeout time and pongTimeout
+     * Creates a Server object with the given port and default pingInterval time and pongTimeout
      * @param port 
      */
     public Server(int port) {
-        this(port,Constants.CONN_CHK_TIMEOUT,Constants.LATENCY);
+        this(port,Constants.PING_INTERVAL,Constants.PONG_TIMEOUT);
     }
     
     /**
      * @param port The port on which the server must run
-     * @param disconnect_ms The disconnect timeout time to check if connection is alive or not
-     * @param latency_ms The amount of time to wait for 'pong' after 'ping' has been sent to the client after inactivity for disconnect_ms time.
+     * @param pingInterval_ms The disconnect timeout time to check if connection is alive or not
+     * @param pongTimeout_ms The amount of time to wait for 'pong' after 'ping' has been sent to the client after inactivity for disconnect_ms time.
      */
-    public Server(int port,int disconnect_ms,int latency_ms) {
+    public Server(int port,int pingInterval_ms,int pongTimeout_ms) {
         System.out.println("[SERVER] Initializing....");
         this.port=port;
-        disconnectTimeout=disconnect_ms;
-        pongTimeout=latency_ms;
+        pingInterval=pingInterval_ms;
+        pongTimeout=pongTimeout_ms;
     }
     
     
@@ -155,17 +155,17 @@ public class Server {
     
     /**
      * Returns the disconnection timeout
-     * @return disconnectTimeout
+     * @return pingInterval
      */
-    final public long getDisconnectTimeout(){
-        return disconnectTimeout;
+    final public long getPingInterval(){
+        return pingInterval;
     }
     
     /**
      * Returns the pongTimeout in milliseconds
      * @return pongTimeout
      */
-    final public long getLatency(){
+    final public long getPongTimeout(){
         return pongTimeout;
     }
     
@@ -185,6 +185,7 @@ public class Server {
      * later to the same client.
      * It must be overridden in the child class. 
      * @param hnd The reference to the ClientHandler of the disconnecting client.
+     * @param msg The message which wasn't sent
      */
     protected void onMsgSendingFailed(ClientHandler hnd,Message msg) {
         //may be overridden

@@ -8,14 +8,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -24,8 +19,8 @@ import javax.swing.JOptionPane;
 public class Client {
     private HashMap<String, Action> actions = new HashMap<>();
     
-    private int connCheckTimeout_ms=10000;
-    private int pongTimeout_ms=500;
+    private int pingInterval=Constants.PING_INTERVAL;
+    private int pongTimeout=Constants.PONG_TIMEOUT;
     
     private Socket socket;
     private String hostname="";
@@ -52,7 +47,7 @@ public class Client {
                         String tag = msg.getTag();
                         System.out.println("[CLIENT] Msg from server - TAG = "+tag);
                         if(tag.equals(Constants.PING)){
-                            sendData(new Message(Constants.PONG,"I am connected!"));
+                            sendData(Constants.PONG,"I am connected!");
                         } else if(tag.equals(Constants.PONG)){
                             connCheckThread.interrupt();
                         } else {                            
@@ -74,9 +69,9 @@ public class Client {
         public void run() {
             while(connected){
                 try {
-                    spuriousSafeSleep(connCheckTimeout_ms);
-                    sendDataEx(new Message(Constants.PING, "Are you alive?"));
-                    spuriousSafeSleep(pongTimeout_ms);
+                    spuriousSafeSleep(pingInterval);
+                    sendDataEx(Constants.PING, "Are you alive?");
+                    spuriousSafeSleep(pongTimeout);
                     System.out.println("[CLIENT] Pong timeout");
                     disconnected();                    
                 } catch (InterruptedException ex) {
@@ -92,11 +87,14 @@ public class Client {
             }
         }
     };
-    
-    public Client(String hostname,int port,int connCheckTimeout_ms){
+    public Client(String hostname,int port){
+        this(hostname, port, Constants.PING_INTERVAL, Constants.PONG_TIMEOUT);
+    }
+    public Client(String hostname,int port,int pingInterval,int pongTimeout){
         this.hostname=hostname;
         this.port=port;
-        this.connCheckTimeout_ms = connCheckTimeout_ms;
+        this.pingInterval = pingInterval;
+        this.pongTimeout = pongTimeout;
     }
     
     public void setToAutoConnect(int maxTries){
@@ -143,7 +141,8 @@ public class Client {
         return actions.get(tag);
     }
     
-    public void sendDataEx(Message msg) throws IOException {
+    public void sendDataEx(String tag, Object data) throws IOException {
+        Message msg = new Message(tag, data);
         if(!connected){
             onMsgSendingFailed(msg);
             return;
@@ -153,7 +152,8 @@ public class Client {
         }
     }
     
-    public void sendData(Message msg) {
+    public void sendData(String tag, Object data) {
+        Message msg = new Message(tag, data);
         if(!connected){
             onMsgSendingFailed(msg);
             return;
