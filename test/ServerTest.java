@@ -1,13 +1,19 @@
 
-import com.chaitanyav.Action;
-import com.chaitanyav.ClientHandler;
+import com.chaitanyav.server.ClientHandler;
 import com.chaitanyav.Message;
-import com.chaitanyav.Server;
+import com.chaitanyav.client.Client;
+import com.chaitanyav.server.Server;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -21,25 +27,60 @@ import java.util.logging.Logger;
  */
 public class ServerTest {
     public static void main(String[] args) {
-        String testStr="I am message";
+        JFrame frm = new JFrame();
+        frm.setLayout(new FlowLayout());
+        JLabel lbl = new JLabel("0");
+        JLabel lbl2 = new JLabel();
+        frm.add(lbl);
+        JButton button = new JButton("Click");
+        JButton button2 = new JButton("disconnect");
+        frm.add(button);
+        frm.add(button2);
+        frm.add(lbl2);
+        frm.setSize(100, 100);
+        frm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frm.setVisible(true);
+        
+        Server svr = new Server(25566);
+        Client clt = new Client("localhost", 25566, 10000){
+            @Override
+            public void onDisconnect(){
+                System.out.println("Disconnected");
+            }
+            
+            @Override
+            public void onConnect(){
+                System.out.println("Connected");
+                lbl2.setText(""+getLocalPort());
+            }
+        };
         try {
-            Server svr = new Server(25565);
-            svr.setAction("ABCD", new Action() {
+            svr.setAction("buttonclick", new com.chaitanyav.server.Action() {
                 @Override
                 public void execute(ClientHandler hnd, Message msg) {
-                    assert(String.valueOf(msg.getData()).equals(testStr));
+                    hnd.sendData(new Message("buttonclick-response",((Integer)msg.getData())+1));
                 }
             });
+            clt.setAction("buttonclick-response",new com.chaitanyav.client.Action(){
+                @Override
+                public void execute(Client client, Message msg) {
+                    lbl.setText(""+(Integer)msg.getData());
+                }                
+            });
+            button.addActionListener((evt)->{
+                clt.sendData(new Message("buttonclick", Integer.parseInt(lbl.getText())));
+            });
+            button2.addActionListener((new ActionListener() {
+                boolean x=true;
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    clt.testDisconnect();
+                }
+            }));
             svr.start();
-            Socket sock = new Socket("localhost",25565);
-            Thread.sleep(2500);
-            ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-            oos.writeObject(new Message("ABCD", testStr));
-            oos.flush();
-            Thread.sleep(2500);
-            svr.stop();
-        } catch (IOException ex) {
-            Logger.getLogger(ServerTest.class.getName()).log(Level.SEVERE, null, ex);
+            
+            clt.setToAutoConnect(7);
+            clt.connect();
         } catch (Exception ex) {
             Logger.getLogger(ServerTest.class.getName()).log(Level.SEVERE, null, ex);
         }
