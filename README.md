@@ -12,7 +12,9 @@ There are two classes Server and Client. You can use them either by extending or
 # Setting up Server
 
 
-##**Step 1: Creating server object**
+
+## **Step 1: Creating server object**
+
 
 ```
 public Server(int port)
@@ -35,6 +37,7 @@ This creates a server that runs on port 25565, sends heartbeat messages every 30
 
 
 ## **Step 2: Setting Action for server, dealing with communication**
+
 
 **Action** is an abstract class that must be extended and its **execute** method be overridden so as to specify what code is to be executed for what message from the client. Each and every message is encapsulated as an object of **Message** class, which contains two fields, the TAG and the DATA. TAG is a string and is used to identify the purpose of data. DATA field is a reference to an Object, which must be type casted to its appropriate type.
 
@@ -80,6 +83,7 @@ This method stops the client handler, but doesn't blocks the thread. The cleanup
 
 ## **Step 3: Starting the server**
 
+
 ```
 svr.start()
 ```
@@ -92,7 +96,10 @@ Similarlt **svr.stop()** can be used to stop the server.
 
 # Setting up the client
 
+
+
 ## **Step 1: Creating Client object**
+
 
 ```
 public Client(String host, int port);
@@ -117,6 +124,7 @@ Client clt = new Client("192.168.1.5",25565,10000,500);
 
 ## **Step 2: Configuring Client**
 
+
 The client is provided with the autoconnect functionality, i.e. if the client detects a broken connection, if will try to reconnect. By default, this feature is disabled. To enable it, use the method **setToAutoConnect**.
 
 ```
@@ -127,6 +135,7 @@ This method turns on the autoconnect feature. **maxTries** specifies the maximum
 
 
 ### Communication - Receiving Data
+
 To respond to messages of server, actions must be registered on the client side.
 
 ```
@@ -166,6 +175,7 @@ If some error occurs due to the connection being broken during the sending of da
 
 ## **Step 3: Starting the client**
 
+
 ```
 public void connect()
 ```
@@ -181,7 +191,9 @@ To stop a client, the method clt.stop() can be called.
 
 # Extending classes
 
+
 The server and client classes are provided with methods that must be overridden in its child class to extend its functionality.
+
 
 ## Server Methods
 
@@ -191,9 +203,13 @@ The server and client classes are provided with methods that must be overridden 
 This method is called when an IOException occurs while writing data to socket stream i.e. in the sendData method. After this method is called, the client is considered to be disconnected and the ClientHandler is stopped.
 
 
+
+
 ### onClientConnected(ClientHandler hnd)
 
 Called when a new client connects to the server and the ClientHandler fully starts functioning. Called at the end of ClientHandler constructor. **Long running operations must be executed in a different thread as it can block the server's new connection accepting thread.**
+
+
 
 
 ### onClientDisconnected(ClientHandler hnd)
@@ -201,9 +217,13 @@ Called when a new client connects to the server and the ClientHandler fully star
 Called when ClientHandler stops while the server is still running. **Long running operationg must be performed in different thread**.
 
 
+
+
 ### onServerStopping()
 
 Called first, when the server.stop() method is called.
+
+
 
 
 ### newClientHandler(Socket socket,Server server)
@@ -225,13 +245,19 @@ The ClientHandler doesn't provides any overridable methods by default and relies
 
 ## Client methods
 
+
+
 ### onMsgSendingFailed(Message msg)
 
 Called when an IOException occurs while writing data to socket stream. The client is then assumed to be disconnected and other methods are called accordingly.
 
+
+
 ### onDisconnect()
 
 Called when the client disconnects from the server
+
+
 
 ### onConnect() 
 
