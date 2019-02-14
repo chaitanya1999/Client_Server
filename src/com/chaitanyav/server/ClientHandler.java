@@ -106,7 +106,6 @@ public class ClientHandler {
                         if(msg.getTag().equals(Constants.PING)){    //if client is checking connection
                             server.executeAction(sequentialExecutor,()->{sendData(Constants.PONG, "Connection is alive!");}
                                     , true);
-                            System.out.println("[SERVER]client pinged");
                         } else {    //if not connection checking message
                             Action action = server.getAction(msg.getTag());
                             if (action != null) {
@@ -158,11 +157,13 @@ public class ClientHandler {
     final public void stop(){
         connected=false;
         try {
-            connCheckerThread.join();
             readerThread.join();
+            synchronized(connCheckerLock){
+                connCheckerLock.notifyAll();
+            }
+            connCheckerThread.join();
             socket.close();
-        } catch (InterruptedException ex) {
-        } catch (IOException ex) {
+        } catch (InterruptedException | IOException ex) {
         }
         
         sequentialExecutor.shutdown();
@@ -181,6 +182,7 @@ public class ClientHandler {
         
         sequentialExecutor.shutdown();
         if (server.isRunning()) {
+            server.onClientDisconnected(this);
             server.getClientList().remove(this);
         }
     }
