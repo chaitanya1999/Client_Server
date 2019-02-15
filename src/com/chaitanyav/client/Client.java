@@ -9,6 +9,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -30,10 +31,14 @@ public class Client {
     final private Object outputStreamLock = new Object();
 
     AtomicBoolean isAlive = new AtomicBoolean(false);
+    private boolean heartbeat = true;
     
     private volatile boolean connected=false;
     private volatile boolean autoconnect=false;
     private int maxTries = 0;
+    
+    private ReentrantLock callDisconnectedOnlyOnce = new ReentrantLock();
+    private volatile boolean disconnectCalled=false;
     
     private Thread readerThread,connCheckThread;
     private Runnable readerRunnable = new Runnable(){
@@ -42,7 +47,8 @@ public class Client {
             while(connected){
                 try {
                     if(socket.getInputStream().available()>0){
-                        isAlive.set(true);
+                        //isAlive.set(true);
+                        connCheckThread.interrupt();
                         Message msg = (Message) inputStream.readObject();
                         String tag = msg.getTag();
                         System.out.println("[CLIENT] Msg from server - TAG = "+tag);
@@ -75,8 +81,8 @@ public class Client {
                     System.out.println("[CLIENT] Pong timeout");
                     disconnected();                    
                 } catch (InterruptedException ex) {
-                    isAlive.set(false);
-                    if(connected==false){
+                    //isAlive.set(false);
+                    if(connected==false){   //if connected is false it means some sendData method found an exception and thus the connection is broken
                         disconnected();
                         return;
                     }
@@ -121,12 +127,13 @@ public class Client {
             inputStream = new ObjectInputStream(socket.getInputStream());            
         }
         connected=true;
+        disconnectCalled=false;
         onConnect();
 
         readerThread = new Thread(readerRunnable);
         connCheckThread = new Thread(connCheckRunnable);
         readerThread.start();
-        connCheckThread.start();
+        if(heartbeat)connCheckThread.start();
     }
     
     final public void setAction(String tag, Action action) throws Exception {
@@ -147,6 +154,7 @@ public class Client {
             onMsgSendingFailed(msg);
             return;
         }
+        // else if connected, send message only then
         synchronized(outputStreamLock){
             outputStream.writeObject(msg);
         }
@@ -158,6 +166,7 @@ public class Client {
             onMsgSendingFailed(msg);
             return;
         }
+        //else if connected, send message only then
         synchronized(outputStreamLock){
             try {
                 outputStream.writeObject(msg);
@@ -165,12 +174,28 @@ public class Client {
                 onMsgSendingFailed(msg);
                 connected=false;
                 connCheckThread.interrupt();
+                if(!heartbeat){
+                    //do this only when heartbeat is disabled i.e. no other thread
+                    //exists to take care of disconnection
+                    
+                    //call the disconnected method only once from all threads
+                    if(callDisconnectedOnlyOnce.tryLock()){//try obtaining a lock
+                        //if lock was obtained, call disconnected() in another thread
+                        new Thread(()->{disconnected();}).start();
+                        //set the flag to true so as after releasing lock, if other
+                        //thread acquire lock, they won't call this method again
+                        //the flag is reset after reconnection
+                        disconnectCalled = true;
+                        callDisconnectedOnlyOnce.unlock();
+                    }
+                }
 
             } catch (IOException ex) {
                 Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
             } 
         } 
     }
+    
     
     
     private void spuriousSafeSleep(int ms) throws InterruptedException{
@@ -249,4 +274,8 @@ public class Client {
         return socket.getLocalPort();
     }
     
+    public void disableHeartbeat(){
+        heartbeat=false;
+    }
+            
 }

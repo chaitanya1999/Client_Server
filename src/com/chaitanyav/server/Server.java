@@ -41,6 +41,8 @@ public class Server {
     private long pongTimeout = 200;   //ping pongTimeout in ms
     private final int port;
     
+    private boolean heartbeat = true;
+    
     
     
     Thread connectorThread = new Thread(){
@@ -146,7 +148,9 @@ public class Server {
     
     /**
      * Executes a Runnable on the thread pool
+     * @param privatePool
      * @param runnable The code to be executed.
+     * @param seperateThread
      */
     final public void executeAction(ExecutorService privatePool,Runnable runnable,boolean seperateThread){
         if(seperateThread)cachedPool.submit(runnable);
@@ -210,5 +214,12 @@ public class Server {
     
     protected ClientHandler newClientHandler(Socket socket,Server server){
         return new ClientHandler(socket, server);
+    }
+    
+    public void disableHeartbeat(){
+        if(!running)heartbeat=false;
+    }
+    public boolean isHeartbeatOn(){
+        return heartbeat;
     }
 }

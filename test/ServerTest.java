@@ -76,8 +76,9 @@ public class ServerTest {
                     x=!x;
                 }
             }));
+            svr.disableHeartbeat();
             svr.start();
-            
+            clt.disableHeartbeat();
             clt.setToAutoConnect(7);
             clt.connect();
         } catch (Exception ex) {

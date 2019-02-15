@@ -32,6 +32,7 @@ public class ClientHandler {
     
     
     //pingpong machanism
+    boolean heartbeat = true;
     
     //<editor-fold>
     private Thread connCheckerThread;
@@ -69,10 +70,12 @@ public class ClientHandler {
                                 }
                             }
                             if (!isActive.get()) {
-                                ClientHandler.this.connected = false;
+                                //client found disconnected
+                                stopNonBlocking();
                             }
                         } catch (SocketException ex) {
-                            ClientHandler.this.connected = false;
+                            //client found disconnected
+                            stopNonBlocking();
                         } catch (InterruptedException | IOException ex) {
                             Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
                         }
@@ -132,8 +135,9 @@ public class ClientHandler {
         this.socket=socket;
         try{
             this.server=server;
-            disconnectTimeout=this.server.getPingInterval();
-            pongTimeout=this.server.getPongTimeout();
+            disconnectTimeout=server.getPingInterval();
+            pongTimeout=server.getPongTimeout();
+            heartbeat = server.isHeartbeatOn();
             
             outputStream=new ObjectOutputStream(socket.getOutputStream());
             inputStream=new ObjectInputStream(socket.getInputStream());
@@ -145,7 +149,7 @@ public class ClientHandler {
             connCheckerThread = new Thread(r_connChecker);
             connCheckerThread.setName("ConnCheckerThread");
             readerThread.start();
-            connCheckerThread.start();
+            if(heartbeat)connCheckerThread.start();
             server.onClientConnected(this);
         } catch (IOException ex) {
             Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
