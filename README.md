@@ -36,7 +36,10 @@ This creates a server that runs on port 25565, sends heartbeat messages every 30
 
 
 
-## **Step 2: Setting Action for server, dealing with communication**
+## **Step 2: Configuring server**
+
+
+### Setting Action
 
 
 **Action** is an abstract class that must be extended and its **execute** method be overridden so as to specify what code is to be executed for what message from the client. Each and every message is encapsulated as an object of **Message** class, which contains two fields, the TAG and the DATA. TAG is a string and is used to identify the purpose of data. DATA field is a reference to an Object, which must be type casted to its appropriate type.
@@ -62,11 +65,25 @@ try{
 }
 ```
 
+
+### Sending data to client
+
 For every client, the server creates an object of class ClientHandler implicitly which contains the methods and threads required for each client-server connection and communication.
 
-For sending data, use the method **clientHandler.sendData(tag,data)**. If this method fails to send data due to some error or due to connection being broken, it makes a call to **onMsgSendingFailed** of the **Server** class to take some appropriate action. This method can be overridden while extending the Server class. It is optional.
+For sending data, use the method **clientHandler.sendData(tag,data)**. If this method fails to send data due to some error or due to connection being broken, it makes a call to **onMsgSendingFailed** of the **Server** class to take some appropriate action. This method can be overridden while extending the Server class. It is optional. Reference to clientHandler can be obtained from action's execute method.
 
-To stop a client handler, two methods are provided, 
+
+### Disabling Heartbeat mechanism
+
+By default heartbeat machanism is enabled. To disable it use the method **svr.disableHeartbeat()**, where svr is the server object.
+
+```
+public void disableHeartbeat()
+```
+
+### Stopping ClientHandler
+
+
 ```
 public void stop()
 ```
@@ -170,6 +187,15 @@ This method can be used from anywhere, where there is a reference to Client obje
 
 If some error occurs due to the connection being broken during the sending of data, the client is assumed to be disconnected and the method **onMsgSendingFailed** is called, and if autoconnect is enabled, reconnection occurs. To use this method, it must be overridden after extending the Client class.
 
+
+
+### Disabling Heartbeat mechanism
+
+By default heartbeat machanism is enabled. To disable it use the method **clt.disableHeartbeat()**, where clt is the client object.
+
+```
+public void disableHeartbeat()
+```
 
 
 
