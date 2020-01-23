@@ -1,6 +1,7 @@
 package com.chaitanyav.client;
 
 import com.chaitanyav.Constants;
+import static com.chaitanyav.Utils.*;
 import com.chaitanyav.Message;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -51,7 +52,7 @@ public class Client {
                         connCheckThread.interrupt();
                         Message msg = (Message) inputStream.readObject();
                         String tag = msg.getTag();
-                        System.out.println("[CLIENT] Msg from server - TAG = "+tag);
+                        log("[CLIENT] Msg from server - TAG = "+tag);
                         if(tag.equals(Constants.PING)){
                             sendData(Constants.PONG,"I am connected!");
                         } else if(tag.equals(Constants.PONG)){
@@ -78,7 +79,7 @@ public class Client {
                     spuriousSafeSleep(pingInterval);
                     sendDataEx(Constants.PING, "Are you alive?");
                     spuriousSafeSleep(pongTimeout);
-                    System.out.println("[CLIENT] Pong timeout");
+                    log("[CLIENT] Pong timeout");
                     disconnected();                    
                 } catch (InterruptedException ex) {
                     //isAlive.set(false);
@@ -108,17 +109,17 @@ public class Client {
         if(maxTries!=0)autoconnect=true;
     }
     
-    public void connect(){
+    public void start(){
         try {
-            System.out.println("[CLIENT] Connecting to server...");
-            connectEx();
-            System.out.println("[CLIENT] Connected to server");
+            log("[CLIENT] Connecting to server...");
+            startEx();
+            log("[CLIENT] Connected to server");
         } catch (IOException ex) {
             disconnected();
         }
     }
     
-    private void connectEx() throws IOException{
+    private void startEx() throws IOException{
         if(connected)return;
         socket = new Socket(hostname, port);
         
@@ -222,7 +223,7 @@ public class Client {
     
     private void disconnected(){
         //code to execute when client disconnects from the server
-        System.out.println("[CLIENT] Disconnected...");
+        log("[CLIENT] Disconnected...");
         onDisconnect();
         connected=false;
         try {
@@ -233,11 +234,11 @@ public class Client {
         if(autoconnect){
             for(int tries=0;(maxTries<0)||tries<maxTries;tries=(maxTries>0)?tries+1:tries){
                 try {
-                    System.out.println("[CLIENT] Reconnecting...");
-                    connectEx();
+                    log("[CLIENT] Reconnecting...");
+                    startEx();
                     break;
                 } catch (IOException ex) {
-                    System.out.println("[CLIENT] Failed to reconnect | Tries - "+(tries+1));
+                    log("[CLIENT] Failed to reconnect | Tries - "+(tries+1));
                 }
             }
         }
@@ -250,7 +251,7 @@ public class Client {
     
     public final void stop(){
         //code to stop 
-        System.out.println("[CLIENT] Stopping client...");
+        log("[CLIENT] Stopping client...");
         boolean bkup=autoconnect;
         autoconnect=false;
         connected=false;
@@ -263,7 +264,7 @@ public class Client {
         } catch (InterruptedException ex) {
         }
         autoconnect=bkup;
-        System.out.println("[CLIENT] Client Stopped!");
+        log("[CLIENT] Client Stopped!");
     }
     
     public boolean isConnected(){

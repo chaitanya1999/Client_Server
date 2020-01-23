@@ -1,6 +1,7 @@
 package com.chaitanyav.server;
 
 import com.chaitanyav.Constants;
+import static com.chaitanyav.Utils.*;
 import com.chaitanyav.Message;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -28,12 +29,12 @@ public class Server {
     
     //executes under context of clienthandler thread
     //declared here instead of static in clienthandler so that multiple servers can coexist in same application
-    private HashMap<String,Action> actions = new HashMap<>();
+    final private HashMap<String,Action> actions = new HashMap<>();
     
     //executor service. all ClientHandlers will share this
     //not static so as to support multiple servers in same application
     private ExecutorService cachedPool = Executors.newCachedThreadPool();
-    //private test globalPool = new test();
+    
     
     //disconnect timeout and pongTimeout DEFAULT in MilliSeconds
     //for now pongTimeout is only checked for when the client doesn't sends any data for pingInterval time
@@ -51,7 +52,7 @@ public class Server {
             while(running){
                 try {
                     Socket s = ssock.accept();
-                    System.out.println("[SERVER] New socket connected - "+s);
+                    log("[SERVER] New socket connected - "+s);
                     clientHandlers.add(newClientHandler(s,Server.this));        
                 } catch (IOException ex) {}
             }
@@ -72,7 +73,7 @@ public class Server {
      * @param pongTimeout_ms The amount of time to wait for 'pong' after 'ping' has been sent to the client after inactivity for disconnect_ms time.
      */
     public Server(int port,int pingInterval_ms,int pongTimeout_ms) {
-        System.out.println("[SERVER] Initializing....");
+        log("[SERVER] Initializing....");
         this.port=port;
         pingInterval=pingInterval_ms;
         pongTimeout=pongTimeout_ms;
@@ -87,7 +88,7 @@ public class Server {
         running=true;
         ssock = new ServerSocket(port);
         connectorThread.start();
-        System.out.println("[SERVER] Done. Started!");
+        log("[SERVER] Done. Started!");
     }
     
     /**
@@ -96,7 +97,7 @@ public class Server {
     final public void stop(){
         if(running==false)return;
         onServerStopping();
-        System.out.println("[SERVER] Stopping server...");
+        log("[SERVER] Stopping server...");
         running=false;
         try {
             ssock.close();
@@ -105,7 +106,7 @@ public class Server {
             }
         } catch (IOException ex) {}
         cachedPool.shutdown();
-        System.out.println("[SERVER] Server stopped!");
+        log("[SERVER] Server stopped!");
     }
     
     //setters and getters
@@ -152,7 +153,7 @@ public class Server {
      * @param runnable The code to be executed.
      * @param seperateThread
      */
-    final public void executeAction(ExecutorService privatePool,Runnable runnable,boolean seperateThread){
+    final void executeAction(ExecutorService privatePool,Runnable runnable,boolean seperateThread){
         if(seperateThread)cachedPool.submit(runnable);
         else privatePool.submit(runnable);
     }

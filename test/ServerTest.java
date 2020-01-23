@@ -72,7 +72,7 @@ public class ServerTest {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if(x)clt.stop();
-                    else clt.connect();
+                    else clt.start();
                     x=!x;
                 }
             }));
@@ -80,7 +80,7 @@ public class ServerTest {
             svr.start();
             clt.disableHeartbeat();
             clt.setToAutoConnect(7);
-            clt.connect();
+            clt.start();
         } catch (Exception ex) {
             Logger.getLogger(ServerTest.class.getName()).log(Level.SEVERE, null, ex);
         }

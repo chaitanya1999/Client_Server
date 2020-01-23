@@ -18,7 +18,7 @@ public class Testing2 {
                 @Override
                 public void execute(ClientHandler hnd, Message msg){
                     int x = (Integer)msg.getData();
-                    hnd.sendData(new Message("buttonclick-response",x+1));
+                    hnd.sendData("buttonclick-response",x+1);
                 }
             });
             svr.start();
