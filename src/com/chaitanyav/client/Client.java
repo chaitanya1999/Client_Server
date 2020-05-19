@@ -251,14 +251,18 @@ public class Client {
     
     public final void stop(){
         //code to stop 
+        if(!connected) return;
         log("[CLIENT] Stopping client...");
         boolean bkup=autoconnect;
         autoconnect=false;
         connected=false;
         connCheckThread.interrupt();
         try {
-            readerThread.join();
-            connCheckThread.join();
+            try {
+                readerThread.join();
+                connCheckThread.join();
+            } catch (NullPointerException ex) {
+            }
             socket.close();
         } catch (IOException ex) {
         } catch (InterruptedException ex) {
